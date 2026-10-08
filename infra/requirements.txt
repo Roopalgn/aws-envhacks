@@ -1,0 +1,1 @@
+# Lambda Python 3.12 supplies boto3. No third-party dependencies are required.

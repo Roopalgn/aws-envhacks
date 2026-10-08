@@ -1,0 +1,152 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: BreatheAhead - scheduled public-data capture, transport simulation and read-only API
+Parameters:
+  EnableSchedule:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+Conditions:
+  ScheduleEnabled: !Equals [!Ref EnableSchedule, 'true']
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures: [arm64]
+    CodeUri: ../.local/lambda/
+    Environment:
+      Variables:
+        DATA_BUCKET: !Ref DataBucket
+Resources:
+  DataBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: {SSEAlgorithm: AES256}
+      LifecycleConfiguration:
+        Rules:
+          - Id: RawRetention
+            Status: Enabled
+            Prefix: raw/
+            ExpirationInDays: 30
+  CaptureFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: backend.aws_handlers.ingest_handler
+      MemorySize: 1024
+      Timeout: 300
+      ReservedConcurrentExecutions: 1
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref DataBucket
+      Events:
+        Refresh:
+          Type: Schedule
+          Properties:
+            Schedule: rate(6 hours)
+            Enabled: !If [ScheduleEnabled, true, false]
+  PublicApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins: ['*']
+        AllowMethods: [GET]
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 20
+        ThrottlingRateLimit: 10
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: backend.aws_handlers.api_handler
+      MemorySize: 256
+      Timeout: 15
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref DataBucket
+      Events:
+        Get:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PublicApi
+            Path: /{proxy+}
+            Method: GET
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: {SSEAlgorithm: AES256}
+  OriginAccess:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub '${AWS::StackName}-website'
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultRootObject: index.html
+        HttpVersion: http2
+        PriceClass: PriceClass_100
+        Origins:
+          - Id: Website
+            DomainName: !GetAtt WebsiteBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt OriginAccess.Id
+            S3OriginConfig: {OriginAccessIdentity: ''}
+        DefaultCacheBehavior:
+          TargetOriginId: Website
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD]
+          CachedMethods: [GET, HEAD]
+          Compress: true
+          ForwardedValues:
+            QueryString: false
+            Cookies: {Forward: none}
+          MinTTL: 0
+          DefaultTTL: 300
+          MaxTTL: 86400
+  WebsitePolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WebsiteBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: cloudfront.amazonaws.com}
+            Action: s3:GetObject
+            Resource: !Sub '${WebsiteBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${Distribution}'
+Outputs:
+  ApiUrl:
+    Value: !Sub 'https://${PublicApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+  DataBucketName:
+    Value: !Ref DataBucket
+  CaptureFunctionName:
+    Value: !Ref CaptureFunction
+  WebsiteBucketName:
+    Value: !Ref WebsiteBucket
+  DistributionId:
+    Value: !Ref Distribution
+  WebsiteUrl:
+    Value: !Sub 'https://${Distribution.DomainName}'
