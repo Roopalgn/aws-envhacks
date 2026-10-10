@@ -1,11 +1,13 @@
 param(
     [string]$Region = 'ap-south-1',
     [string]$StackName = 'breatheahead',
+    [string]$Profile = '',
     [switch]$EnableSchedule
 )
 $ErrorActionPreference = 'Stop'
 Set-Location (Split-Path $PSScriptRoot -Parent)
-foreach ($tool in @('aws', 'sam', 'python', 'npm')) {
+if ($Profile) { $env:AWS_PROFILE = $Profile }
+foreach ($tool in @('aws', 'sam', 'python', 'npm.cmd')) {
     if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) { throw "Missing required tool: $tool" }
 }
 function Invoke-Checked {
@@ -16,6 +18,7 @@ function Invoke-Checked {
 Invoke-Checked 'aws' @('sts', 'get-caller-identity', '--region', $Region)
 Invoke-Checked 'python' @('-m', 'unittest', 'discover', '-s', 'tests', '-v')
 Invoke-Checked 'python' @('scripts/stage_backend.py')
+Invoke-Checked 'sam' @('validate', '--template-file', 'infra/template.yaml')
 Invoke-Checked 'sam' @('build', '--template-file', 'infra/template.yaml', '--build-dir', '.local/sam-build')
 $scheduleValue = if ($EnableSchedule) { 'true' } else { 'false' }
 Invoke-Checked 'sam' @('deploy', '--template-file', '.local/sam-build/template.yaml', '--stack-name', $StackName, '--region', $Region, '--resolve-s3', '--capabilities', 'CAPABILITY_IAM', '--parameter-overrides', "EnableSchedule=$scheduleValue", '--no-fail-on-empty-changeset')
@@ -29,7 +32,7 @@ if ($capture.status -ne 'published') { throw 'AWS capture failed. Inspect .local
 $priorApi = $env:VITE_API_URL
 try {
     $env:VITE_API_URL = $stackOutputs['ApiUrl']
-    Invoke-Checked 'npm' @('run', 'build')
+    Invoke-Checked 'npm.cmd' @('run', 'build')
 } finally {
     $env:VITE_API_URL = $priorApi
 }

@@ -10,6 +10,13 @@ def storage():
     import boto3
     return boto3.client('s3'), os.environ['DATA_BUCKET']
 
+def is_missing_s3_object(exc):
+    """Recognize only an explicit S3 missing-key response; rethrow everything else."""
+    response = getattr(exc, 'response', {})
+    error = response.get('Error', {})
+    metadata = response.get('ResponseMetadata', {})
+    return error.get('Code') in ('404', 'NoSuchKey', 'NotFound') or metadata.get('HTTPStatusCode') == 404
+
 def ingest_handler(event,context):
     s3,bucket=storage()
     with tempfile.TemporaryDirectory() as directory:
@@ -18,8 +25,8 @@ def ingest_handler(event,context):
         output.mkdir()
         try:
             s3.download_file(bucket,'processed/events.json',str(output/'events.json'))
-        except s3.exceptions.ClientError as exc:
-            if exc.response['Error']['Code'] not in ('404','NoSuchKey'):
+        except Exception as exc:
+            if not is_missing_s3_object(exc):
                 raise
         result=capture(output,raw)
         # Publish the immutable capture before the latest pointer and event index.
@@ -44,7 +51,7 @@ def api_handler(event,context):
         item=s3.get_object(Bucket=bucket,Key='processed/'+name)
         data=json.loads(item['Body'].read())
         return response(200,select_payload(route,data))
-    except s3.exceptions.ClientError as exc:
-        if exc.response['Error']['Code'] in ('NoSuchKey','404'):
+    except Exception as exc:
+        if is_missing_s3_object(exc):
             return response(503,{'error':'No captured dataset available yet'})
         raise

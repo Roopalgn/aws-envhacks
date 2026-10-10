@@ -19,7 +19,7 @@ Globals:
 Resources:
   DataBucket:
     Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
+    DeletionPolicy: RetainExceptOnCreate
     UpdateReplacePolicy: Retain
     Properties:
       PublicAccessBlockConfiguration:
@@ -42,7 +42,6 @@ Resources:
       Handler: backend.aws_handlers.ingest_handler
       MemorySize: 1024
       Timeout: 300
-      ReservedConcurrentExecutions: 1
       Policies:
         - S3CrudPolicy:
             BucketName: !Ref DataBucket
@@ -79,7 +78,7 @@ Resources:
             Method: GET
   WebsiteBucket:
     Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
+    DeletionPolicy: RetainExceptOnCreate
     UpdateReplacePolicy: Retain
     Properties:
       PublicAccessBlockConfiguration:

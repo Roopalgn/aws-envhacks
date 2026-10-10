@@ -1,4 +1,4 @@
-# Execution status — October 8, 2026
+# Execution status — October 9, 2026
 
 ## Implemented
 
@@ -12,13 +12,13 @@
 - [x] Build verified-measurement CSV import and time-aligned station markers.
 - [x] Implement local API and AWS ingestion/API handlers.
 - [x] Add SAM infrastructure and an end-to-end AWS deployment script.
+- [x] Deploy in `ap-south-1`, publish a real 117-detection capture, and verify the hosted UI, API, and replay. Website: https://d2du2xm4yef86k.cloudfront.net/. The six-hour schedule remains disabled.
 - [x] Document methodology, assumptions, provenance and demo narration.
 
 ## Still needed for submission
 
-1. **Deploy and verify AWS.** No CLI, SAM installation or account credentials were available during initial implementation. Run the deployment script in the intended configured account, verify a real capture and website, and preserve deployment evidence.
-2. **Ground observations and historical validation.** Obtain real, matching station measurements. The captured October 8 transport run is replayable but is not a validated historical pollution event. Add more events and evaluate a defined comparison before reporting accuracy.
-3. **Record the demo and submit.** The script is prepared; no video has been recorded or submission sent. Confirm final requirements on the event site. The supplied plan's three-minute limit is used as the working constraint.
-4. **Optional later:** higher-resolution/aloft winds, release timing and source clustering, uncertainty ensembles, continuous emission assumptions, and evidence-bound Bedrock summaries. These should follow, not replace, the validated data pipeline.
+1. **Ground observations and historical validation.** Obtain real, matching station measurements. The captured transport runs are replayable but are not validated historical pollution events. Add more events and evaluate a defined comparison before reporting accuracy.
+2. **Record the demo and submit.** The script is prepared; no video has been recorded or submission sent. Confirm final requirements on the event site. The supplied plan's three-minute limit is used as the working constraint.
+3. **Optional later:** higher-resolution/aloft winds, release timing and source clustering, uncertainty ensembles, continuous emission assumptions, and evidence-bound Bedrock summaries. These should follow, not replace, the validated data pipeline.
 
 The default capture is real public data, not synthetic demo data. Source thermal anomalies are not classified as agricultural fires. Local proximity is not a health forecast or a city-pollution attribution.

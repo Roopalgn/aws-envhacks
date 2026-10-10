@@ -13,7 +13,7 @@ Built for the Air track of Environmental Hacks, October 8–11, 2026. An interac
 - Timestamped ground-observation CSV importer; no fabricated readings or comparison claims.
 - AWS SAM infrastructure and deployment script: EventBridge, ingestion Lambda, private S3, read-only API Gateway/Lambda, private static S3 + CloudFront.
 
-**Deployment status:** implemented locally, not deployed to AWS in this workspace. The UI reports this explicitly. AWS CLI/SAM and account configuration are required to deploy. No model validation, real-time ground feed, historical pollution-event validation, Bedrock integration, or final demo video is claimed.
+**Deployment status:** deployed to AWS in `ap-south-1` on October 9, 2026: [open BreatheAhead](https://d2du2xm4yef86k.cloudfront.net/). The hosted UI loads the AWS API and a real capture of 117 satellite fire detections. The six-hour capture schedule is disabled. No model validation, real-time ground feed, historical pollution-event validation, Bedrock integration, or final demo video is claimed.
 
 The bundled capture contains **193 real detections**, nine wind points and 25 hourly frames. It was retrieved on **October 8, 2026 at 20:28 IST**, with a model start of **14:30 IST**. It is a captured run, never described as current live conditions. The rectangular source domain includes nearby parts of Pakistan; coordinates are not classified as Indian agricultural fires.
 
@@ -113,15 +113,17 @@ Turn on **Ground observations**. Blue markers appear only within ±30 minutes of
 
 ## AWS deployment
 
-Install the official AWS CLI v2 and AWS SAM CLI, and configure the intended account locally (prefer SSO). Never put credentials in this repository or chat. Then:
+For a detailed Windows PowerShell guide covering account checks, installs, SSO, deployment, verification, costs, troubleshooting and teardown, see [the AWS deployment walkthrough](docs/aws-deployment.md).
+
+Install the official AWS CLI v2 and AWS SAM CLI, and configure the intended account locally (prefer SSO). Never put credentials in this repository or chat. With the existing `breathe-ahead` profile:
 
 ```powershell
-./scripts/deploy.ps1 -Region ap-south-1
+./scripts/deploy.ps1 -Profile breathe-ahead -Region ap-south-1
 # Optional: enable recurring real ingestion every six hours
-./scripts/deploy.ps1 -Region ap-south-1 -EnableSchedule
+./scripts/deploy.ps1 -Profile breathe-ahead -Region ap-south-1 -EnableSchedule
 ```
 
-The script checks the AWS identity, runs tests, stages **only backend Python files**, builds/deploys SAM, invokes a real ingestion Lambda, builds the frontend against the returned API URL, uploads it to the private website bucket, invalidates CloudFront, and checks the API health and forecast shape. The schedule is off by default. Failed ingestion stops the script before it presents deployment as successful. The template and deployment script have not yet been exercised against AWS in this environment.
+The script checks the AWS identity, runs tests, stages **only backend Python files**, builds/deploys SAM, invokes a real ingestion Lambda, builds the frontend against the returned API URL, uploads it to the private website bucket, invalidates CloudFront, and checks the API health and forecast shape. The schedule is off by default. Failed ingestion stops the script before it presents deployment as successful. The deployment completed successfully on October 9, 2026; the hosted UI and replay were verified against the AWS API.
 
 Both buckets block public access and use server-side encryption. CloudFront accesses the website bucket through origin access control. Read-only API routes are public and throttled. Lambda ingestion has write access to the data bucket; the API has read-only access. Raw files expire after 30 days; processed captures are retained. SAM and AWS usage can incur charges. Set an AWS budget appropriate to the available hackathon credits; disable scheduling when no longer needed. Buckets are retained if the stack is deleted, so remove retained objects and buckets deliberately when the project is finished.
 
