@@ -6,6 +6,7 @@ import io
 import json
 import math
 import os
+import uuid
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
@@ -83,7 +84,9 @@ def capture(output=None, raw_dir=None):
             u,v = wind_uv(speed,direction)
             values.append({'u':round(u,4),'v':round(v,4)})
         grid.append({'lat':coords_requested[0],'lon':coords_requested[1], 'modelLat':record['latitude'], 'modelLon':record['longitude'], 'hours':values})
-    event_id = 'capture-'+start.strftime('%Y%m%dT%H%M')
+    # Separate each retrieval from its model anchor: forecasts can change even
+    # when the latest detection still belongs to the same start hour.
+    event_id = 'capture-'+start.strftime('%Y%m%dT%H%M')+'-'+uuid.uuid4().hex
     frames = simulate(sources,grid,start.isoformat())
     dataset = {'schemaVersion':1,'id':event_id,'title':'Northern India · captured transport run',
                'capturedAt':now.isoformat(),'startTime':start.isoformat(),'kind':'captured', 'totalDetections':count,

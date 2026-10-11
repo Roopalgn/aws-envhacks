@@ -92,6 +92,12 @@ Let the command finish. Do not start a second deployment while the first CloudFo
 
 ## 6. Verify the deployed app
 
+For later changes to the interface, publish only the frontend. This runs all tests and builds against the stack's API URL without running ingestion or changing the capture schedule:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File '.\scripts\publish-frontend.ps1' -Profile 'breathe-ahead' -Region 'ap-south-1'
+```
+
 Open the `https://…cloudfront.net` URL printed by the script. The page should show `CAPTURED DATA`, a capture timestamp, detections, and forecast controls. It should show `AWS backend verified` after the API health check passes.
 
 You can inspect the endpoints from PowerShell; these commands are read-only:

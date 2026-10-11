@@ -16,7 +16,7 @@ function Invoke-Checked {
     if ($LASTEXITCODE -ne 0) { throw "$Command failed with exit code $LASTEXITCODE" }
 }
 Invoke-Checked 'aws' @('sts', 'get-caller-identity', '--region', $Region)
-Invoke-Checked 'python' @('-m', 'unittest', 'discover', '-s', 'tests', '-v')
+Invoke-Checked 'npm.cmd' @('test')
 Invoke-Checked 'python' @('scripts/stage_backend.py')
 Invoke-Checked 'sam' @('validate', '--template-file', 'infra/template.yaml')
 Invoke-Checked 'sam' @('build', '--template-file', 'infra/template.yaml', '--build-dir', '.local/sam-build')

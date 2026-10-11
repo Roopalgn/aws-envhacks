@@ -1,4 +1,4 @@
-# Execution status — October 9, 2026
+# Execution status — October 10, 2026
 
 ## Implemented
 
@@ -14,6 +14,10 @@
 - [x] Add SAM infrastructure and an end-to-end AWS deployment script.
 - [x] Deploy in `ap-south-1`, publish a real 117-detection capture, and verify the hosted UI, API, and replay. Website: https://d2du2xm4yef86k.cloudfront.net/. The six-hour schedule remains disabled.
 - [x] Document methodology, assumptions, provenance and demo narration.
+- [x] Replace LIVE/EXPOSURE wording; add source tracing, modeled source-group inspection, common-scale location comparison, guided presentation, and capture evidence view.
+- [x] Align wind rendering with the Python model's distance weighting; verify source grouping, tracing and timing with frontend analysis tests.
+- [x] Preserve separate ingestion runs at the same model start hour using unique capture IDs, with backward-compatible replay routes and regression coverage.
+- [x] Deploy the demo improvements and replay fix; verify 21 tests, production build, desktop/mobile UI, and a real 127-detection capture with its unique replay endpoint. Schedule remains disabled.
 
 ## Still needed for submission
 

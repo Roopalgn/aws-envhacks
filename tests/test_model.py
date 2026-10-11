@@ -62,6 +62,9 @@ class TransportTests(unittest.TestCase):
         self.assertIsNone(dataset_path('/replay/../../secret'))
         self.assertIsNone(dataset_path('/replay/capture-20261008T0900/extra'))
         self.assertEqual(dataset_path('/replay/capture-20261008T0900'),'capture-20261008T0900.json')
+        self.assertEqual(dataset_path('/replay/capture-20261008T0900-0123456789abcdef0123456789abcdef'),'capture-20261008T0900-0123456789abcdef0123456789abcdef.json')
+        self.assertIsNone(dataset_path('/replay/capture-20261008T0900-0123456789abcdef0123456789abcdef/extra'))
+        self.assertIsNone(dataset_path('/replay/capture-20261008T0900-../../secret'))
 
     def test_observations_require_timestamps_and_provenance(self):
         header='station,latitude,longitude,time,pm25,unit,source_url\n'

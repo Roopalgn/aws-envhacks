@@ -1,19 +1,22 @@
 # BreatheAhead
 
-**See pollution move. Source → Transport → Exposure.**
+**See pollution move. Source → Transport → Potential influence.**
 
 Built for the Air track of Environmental Hacks, October 8–11, 2026. An interactive map connects real satellite thermal anomalies with a simplified wind-driven particle simulation over northern India and its upwind surroundings.
 
 ## Current implementation
 
 - React + TypeScript + Leaflet map; animated wind field, smoke particles, selectable locations and detections, layer switches, 0–24 hour playback.
+- Select a detection to trace its modeled mean particle pathway and displacement; inspect source groups contributing modeled particles near a city.
+- Compare seven locations on a common particle-count scale, with peak timing and first modeled proximity.
+- Four-chapter guided tour and presentation view; inspect capture timestamps, input hashes and the AWS pipeline in the provenance panel.
 - Real NASA FIRMS Suomi NPP VIIRS detections and Open-Meteo forecast winds, captured with raw responses and SHA-256 provenance.
 - Deterministic Python transport engine shared by local ingestion and AWS Lambda.
 - Offline captured-run replay with a saved event index. Local geography is bundled; map tiles and API keys are not required.
 - Timestamped ground-observation CSV importer; no fabricated readings or comparison claims.
 - AWS SAM infrastructure and deployment script: EventBridge, ingestion Lambda, private S3, read-only API Gateway/Lambda, private static S3 + CloudFront.
 
-**Deployment status:** deployed to AWS in `ap-south-1` on October 9, 2026: [open BreatheAhead](https://d2du2xm4yef86k.cloudfront.net/). The hosted UI loads the AWS API and a real capture of 117 satellite fire detections. The six-hour capture schedule is disabled. No model validation, real-time ground feed, historical pollution-event validation, Bedrock integration, or final demo video is claimed.
+**Deployment status:** deployed to AWS in `ap-south-1` on October 9, 2026: [open BreatheAhead](https://d2du2xm4yef86k.cloudfront.net/). The hosted UI loads real captured detections from the AWS API; the first verified capture contained 117 detections. The six-hour capture schedule is disabled. No model validation, real-time ground feed, historical pollution-event validation, Bedrock integration, or final demo video is claimed.
 
 The bundled capture contains **193 real detections**, nine wind points and 25 hourly frames. It was retrieved on **October 8, 2026 at 20:28 IST**, with a model start of **14:30 IST**. It is a captured run, never described as current live conditions. The rectangular source domain includes nearby parts of Pakistan; coordinates are not classified as Indian agricultural fires.
 
@@ -95,6 +98,8 @@ There is no plume rise, vertical mixing, terrain-resolved wind, chemistry, emiss
 
 `data/raw/` preserves original fire and wind responses. `public/data/capture-*.json` contains a reproducible processed run, its inputs, metadata and derived frames. `latest.json` is the default capture; `events.json` indexes saved replays. Public payloads contain only environmental data. Raw NASA regional data includes detections outside the app's filtered domain.
 
+New capture IDs include a UUID suffix, so repeating ingestion at the same model start hour preserves separate runs and raw responses. Older IDs remain readable. The replay menu displays both model start and capture time.
+
 ## Ground observations
 
 Obtain timestamped, quality-checked measurements from a legitimate provider such as OpenAQ or a monitoring agency. Do not use forecast PM2.5 as a ground measurement. The importer requires a CSV with these columns (no sample measurements are shipped):
@@ -133,4 +138,6 @@ Routes: `/health`, `/forecast`, `/sources`, `/wind`, `/locations`, `/observation
 
 `npm test` covers wind-direction convention, velocity units, decay, seed repeatability, calm winds, missing coverage, interpolation across 0°/360°, out-of-domain behavior, ingestion normalization, replay-path validation, observation metadata, and the committed capture contract.
 
-See [docs/demo.md](docs/demo.md) for the ≤3-minute walkthrough and [docs/execution-status.md](docs/execution-status.md) for remaining submission work. The supplied [info.md](info.md) is the event brief; [temp-plan.md](temp-plan.md) is preserved as the original plan. No claim of prize eligibility is made before the AWS deployment or other qualifying use is verified.
+The frontend analysis tests reconcile source groups against every saved city count, verify tracing after particles leave the domain, check peak/first-proximity timing, and verify that wind arrows use the Python model's kilometer-based weighting.
+
+See [docs/demo.md](docs/demo.md) for the ≤3-minute walkthrough, [docs/project-review.md](docs/project-review.md) for the demo improvements and remaining gaps, and [docs/execution-status.md](docs/execution-status.md) for remaining submission work. The supplied [info.md](info.md) is the event brief; [temp-plan.md](temp-plan.md) is preserved as the original plan.

@@ -12,7 +12,8 @@ def dataset_path(route):
         return 'latest.json'
     if route == '/events':
         return 'events.json'
-    match = re.fullmatch(r'/replay/(capture-\d{8}T\d{4})', route)
+    # Keep pre-existing IDs readable while accepting unique capture suffixes.
+    match = re.fullmatch(r'/replay/(capture-\d{8}T\d{4}(?:-[a-f0-9]{32})?)', route)
     if match:
         return match[1]+'.json'
     return None

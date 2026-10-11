@@ -2,6 +2,7 @@ import io
 import json
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 from backend.ingest import capture
@@ -28,6 +29,27 @@ class FakeS3:
         return {'Body':io.BytesIO(self.files[Key])}
 
 class PipelineTests(unittest.TestCase):
+    def test_same_anchor_captures_preserve_previous_run_and_raw_inputs(self):
+        fire = b'latitude,longitude,acq_date,acq_time,confidence,frp\n30,76,2026-10-08,930,nominal,4\n'
+        start = datetime(2026, 10, 8, 10, tzinfo=timezone.utc)
+        times = [(start+timedelta(hours=h)).isoformat() for h in range(25)]
+        weather = [{'latitude':lat, 'longitude':lon, 'hourly':{'time':times, 'wind_speed_10m':[3]*25,
+            'wind_direction_10m':[270]*25}} for lat in (26,29.5,33) for lon in (72,76,80)]
+        wind = json.dumps(weather).encode()
+        weather[0]['hourly']['wind_speed_10m'][0] = 4
+        revised_wind = json.dumps(weather).encode()
+        with tempfile.TemporaryDirectory() as directory, patch('backend.ingest.fetch', side_effect=[fire,wind,fire,revised_wind]), patch('backend.ingest.simulate', return_value=[]):
+            output, raw = Path(directory)/'processed', Path(directory)/'raw'
+            first = capture(output, raw)
+            original = (output/(first['id']+'.json')).read_bytes()
+            second = capture(output, raw)
+            self.assertEqual(first['startTime'], second['startTime'])
+            self.assertNotEqual(first['id'], second['id'])
+            self.assertEqual((output/(first['id']+'.json')).read_bytes(), original)
+            self.assertEqual((raw/(first['id']+'-wind.json')).read_bytes(), wind)
+            self.assertEqual((raw/(second['id']+'-wind.json')).read_bytes(), revised_wind)
+            self.assertEqual([e['id'] for e in json.loads((output/'events.json').read_text())], [second['id'],first['id']])
+
     def test_upstream_failure_preserves_existing_capture(self):
         with tempfile.TemporaryDirectory() as directory:
             output=Path(directory)/'processed'
