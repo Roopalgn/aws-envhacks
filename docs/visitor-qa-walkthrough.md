@@ -126,4 +126,4 @@ Repeat the site at about 390 × 844 (phone or browser device emulation), then at
 
 For any failure, record: **test ID**, browser/device and screen width, selected mode/run/hour, selected city or source, exact action, expected result, actual result, whether it reproduces after reload, and a screenshot. Include the captured timestamp (and capture ID from Evidence when relevant) because saved runs can differ. Prioritize crashes, wrong data/run mix-ups, broken controls, misleading exposure/live wording, or mobile controls that cannot be reached.
 
-An empty observation layer, zero-proximity city, changing capture count, or a source path ending when particles leave the grid is not by itself a bug. The six-hour AWS capture schedule is currently enabled even though the stack parameter says it is disabled; that infrastructure mismatch is separate from visitor UI behavior.
+An empty observation layer, zero-proximity city, changing capture count, or a source path ending when particles leave the grid is not by itself a bug. Capture scheduling is an infrastructure setting; the deployment guide explains how to configure and verify it independently of visitor UI behavior.

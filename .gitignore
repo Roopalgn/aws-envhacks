@@ -9,3 +9,9 @@ __pycache__/
 samconfig.toml
 *.tsbuildinfo
 .local/
+
+# Local event brief, planning notes, and progress reports.
+/info.md
+/temp-plan.md
+/docs/execution-status.md
+/docs/project-review.md

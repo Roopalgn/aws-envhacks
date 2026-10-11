@@ -26,6 +26,12 @@ $outputsText = & aws cloudformation describe-stacks --stack-name $StackName --re
 if ($LASTEXITCODE -ne 0) { throw 'Unable to read stack outputs' }
 $stackOutputs = @{}
 ($outputsText | ConvertFrom-Json) | ForEach-Object { $stackOutputs[$_.OutputKey] = $_.OutputValue }
+$ruleName = & aws cloudformation describe-stack-resource --stack-name $StackName --logical-resource-id CaptureFunctionRefresh --region $Region --query 'StackResourceDetail.PhysicalResourceId' --output text
+if ($LASTEXITCODE -ne 0) { throw 'Unable to identify the capture schedule rule' }
+$ruleState = & aws events describe-rule --name $ruleName --region $Region --query 'State' --output text
+if ($LASTEXITCODE -ne 0) { throw 'Unable to verify capture schedule state' }
+$expectedRuleState = if ($EnableSchedule) { 'ENABLED' } else { 'DISABLED' }
+if ($ruleState.Trim() -ne $expectedRuleState) { throw "Capture schedule is $ruleState; expected $expectedRuleState. Review EventBridge before continuing." }
 Invoke-Checked 'aws' @('lambda', 'invoke', '--function-name', $stackOutputs['CaptureFunctionName'], '--region', $Region, '.local/capture-result.json')
 $capture = Get-Content '.local/capture-result.json' -Raw | ConvertFrom-Json
 if ($capture.status -ne 'published') { throw 'AWS capture failed. Inspect .local/capture-result.json and CloudWatch logs.' }

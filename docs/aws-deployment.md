@@ -4,6 +4,8 @@ This deploys BreatheAhead in your AWS account. It creates an S3 bucket for captu
 
 The project targets `ap-south-1` (Mumbai) by default. The stack name is `breatheahead`. Deploy from a clean PowerShell session.
 
+The schedule uses a conditional `State: ENABLED / DISABLED`, and the deployment script verifies the actual EventBridge rule state before publishing. Earlier deployments used a conditional boolean `Enabled` property that was translated as enabled even with `EnableSchedule=false`. Redeploy this template to apply the correction; changing repository files alone does not update an existing AWS rule.
+
 ## 1. Check the account and cost
 
 Use an AWS account intended for the hackathon and one you are allowed to deploy into. Check the account, selected role, billing alerts, and any AWS credits in the AWS console. Do not assume credits were applied because the event mentions them. For an organization-managed account, ask its administrator for a deployment role allowed to create this CloudFormation stack and required IAM roles, S3 buckets, Lambda functions, API Gateway, CloudFront distribution, and EventBridge rule. A developer role may not permit all these services.

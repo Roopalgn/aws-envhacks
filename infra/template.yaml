@@ -50,7 +50,7 @@ Resources:
           Type: Schedule
           Properties:
             Schedule: rate(6 hours)
-            Enabled: !If [ScheduleEnabled, true, false]
+            State: !If [ScheduleEnabled, ENABLED, DISABLED]
   PublicApi:
     Type: AWS::Serverless::HttpApi
     Properties:
